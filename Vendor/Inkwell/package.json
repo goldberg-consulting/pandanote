@@ -1,0 +1,351 @@
+{
+  "name": "inkwell",
+  "displayName": "Inkwell",
+  "description": "Markdown to publication-quality PDF. Live preview, Pandoc + XeLaTeX compilation, runnable code blocks, and LaTeX template management.",
+  "version": "0.5.0",
+  "publisher": "measure-one",
+  "icon": "media/icon.png",
+  "license": "SEE LICENSE IN LICENSE",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Visualization",
+    "Notebooks",
+    "Programming Languages"
+  ],
+  "keywords": [
+    "markdown",
+    "latex",
+    "pandoc",
+    "pdf",
+    "xelatex",
+    "academic",
+    "preview",
+    "literate programming"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/goldberg-consulting/measured.one.inkwell-extension"
+  },
+  "activationEvents": [
+    "onLanguage:markdown",
+    "onLanguage:latex",
+    "workspaceContains:.inkwell"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "inkwell.configureBibliography",
+        "title": "Configure Bibliography",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.bibliographyDoctor",
+        "title": "Bibliography Doctor",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.preview",
+        "title": "Inkwell: Open Preview",
+        "category": "Inkwell",
+        "icon": "$(open-preview)"
+      },
+      {
+        "command": "inkwell.compile",
+        "title": "Inkwell: Compile PDF",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.exportPDF",
+        "title": "Inkwell: Export PDF to File...",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.selectTemplate",
+        "title": "Inkwell: Select LaTeX Template",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.setupToolchain",
+        "title": "Inkwell: Setup / Repair",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.setupRepair",
+        "title": "Inkwell: Setup / Repair",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.installPackage",
+        "title": "Inkwell: Install LaTeX Package",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.runCodeBlocks",
+        "title": "Inkwell: Run Code Blocks",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.clearRunCache",
+        "title": "Inkwell: Clear Code Block Cache",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.cancelRun",
+        "title": "Inkwell: Cancel Running Code Blocks",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.setupPythonEnv",
+        "title": "Inkwell: Setup Python Environment (venv)",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.initProject",
+        "title": "Inkwell: New Project",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.setupWorkspace",
+        "title": "Inkwell: Setup Workspace",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.configureDocumentStyle",
+        "title": "Configure Document Style",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.preview.decreaseFontScale",
+        "title": "Decrease Preview Text Size",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.preview.increaseFontScale",
+        "title": "Increase Preview Text Size",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.preview.resetFontScale",
+        "title": "Reset Preview Text Size",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.extractCodeBlockToScript",
+        "title": "Inkwell: Extract Code Block to Script",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.openRunScript",
+        "title": "Inkwell: Open Run Script",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.runThisBlock",
+        "title": "Inkwell: Run This Block",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.runChangedBlocks",
+        "title": "Inkwell: Run Changed Blocks",
+        "category": "Inkwell"
+      },
+      {
+        "command": "inkwell.showCurrentRunDetails",
+        "title": "Inkwell: Show Current Run Details",
+        "category": "Inkwell"
+      }
+    ],
+    "walkthroughs": [
+      {
+        "id": "inkwell.firstProject",
+        "title": "Write your first Inkwell document",
+        "description": "Verify the tools, prepare your project, and build a PDF.",
+        "steps": [
+          {
+            "id": "verifySetup",
+            "title": "Set up or repair Inkwell",
+            "description": "[Run Setup / Repair](command:inkwell.setupRepair) to check the installed tools, review any required installation, and verify a real PDF build.",
+            "media": {
+              "markdown": "media/walkthrough/setup.md"
+            },
+            "completionEvents": [
+              "onContext:inkwell.setupVerified"
+            ]
+          },
+          {
+            "id": "createDocument",
+            "title": "Create your document",
+            "description": "[Create a project](command:inkwell.initProject), then [open its preview](command:inkwell.preview). New Project uses the same verified setup flow.",
+            "media": {
+              "markdown": "media/walkthrough/project.md"
+            },
+            "completionEvents": [
+              "onContext:inkwell.projectCreated"
+            ]
+          }
+        ]
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "inkwell.preview",
+        "key": "ctrl+shift+v",
+        "mac": "cmd+shift+v",
+        "when": "editorLangId == markdown || editorLangId == latex"
+      },
+      {
+        "command": "inkwell.compile",
+        "key": "ctrl+shift+r",
+        "mac": "cmd+shift+r",
+        "when": "editorLangId == markdown || editorLangId == latex"
+      },
+      {
+        "command": "inkwell.runCodeBlocks",
+        "key": "ctrl+alt+r",
+        "mac": "cmd+alt+r",
+        "when": "editorLangId == markdown"
+      },
+      {
+        "command": "inkwell.preview.decreaseFontScale",
+        "key": "ctrl+alt+-",
+        "mac": "cmd+alt+-",
+        "when": "activeWebviewPanelId == inkwellPreview"
+      },
+      {
+        "command": "inkwell.preview.increaseFontScale",
+        "key": "ctrl+alt+=",
+        "mac": "cmd+alt+=",
+        "when": "activeWebviewPanelId == inkwellPreview"
+      },
+      {
+        "command": "inkwell.preview.resetFontScale",
+        "key": "ctrl+alt+0",
+        "mac": "cmd+alt+0",
+        "when": "activeWebviewPanelId == inkwellPreview"
+      }
+    ],
+    "configuration": {
+      "title": "Inkwell",
+      "properties": {
+        "inkwell.autoCompile": {
+          "type": "string",
+          "enum": [
+            "off",
+            "onSave",
+            "interval"
+          ],
+          "default": "off",
+          "enumDescriptions": [
+            "Manual compilation only (use the toolbar button or keybinding)",
+            "Compile automatically each time the file is saved",
+            "Compile on a repeating timer (see autoCompileIntervalSeconds)"
+          ],
+          "description": "When to automatically compile the PDF."
+        },
+        "inkwell.autoCompileIntervalSeconds": {
+          "type": "number",
+          "default": 60,
+          "minimum": 10,
+          "description": "Seconds between auto-compilations when autoCompile is 'interval'."
+        },
+        "inkwell.defaultCodeDisplay": {
+          "type": "string",
+          "enum": [
+            "output",
+            "both",
+            "code",
+            "none"
+          ],
+          "default": "output",
+          "enumDescriptions": [
+            "Show only the output of code blocks",
+            "Show both the source code and its output",
+            "Show only the source code",
+            "Hide code blocks entirely"
+          ],
+          "description": "Default visibility for code blocks in compiled output. Can be overridden per-document (inkwell.code-display in frontmatter) or per-block (display attribute)."
+        },
+        "inkwell.preview.fontScale": {
+          "type": "number",
+          "default": 100,
+          "minimum": 50,
+          "maximum": 200,
+          "description": "Draft and Print View text scale, as a percentage. This viewer preference never changes the saved document or compiled PDF. Toolbar changes are remembered per workspace."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        {
+          "command": "inkwell.setupToolchain",
+          "when": "false"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "inkwell.preview",
+          "when": "editorLangId == markdown || editorLangId == latex",
+          "group": "navigation"
+        },
+        {
+          "command": "inkwell.runCodeBlocks",
+          "when": "editorLangId == markdown && inkwell.hasProject",
+          "group": "navigation@2"
+        },
+        {
+          "command": "inkwell.setupWorkspace",
+          "when": "(editorLangId == markdown || editorLangId == latex) && !inkwell.hasProject",
+          "group": "navigation@1"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "prepare": "husky",
+    "vscode:prepublish": "npm run package",
+    "compile": "tsc -p ./",
+    "typecheck": "tsc -p ./ --noEmit",
+    "watch": "tsc -watch -p ./",
+    "package": "esbuild src/extension.ts --bundle --outfile=out/extension.js --external:vscode --format=cjs --platform=node --target=node18 --minify && esbuild src/doctor-cli.ts src/install-cli.ts --bundle --outdir=out --format=cjs --platform=node --target=node18 --minify && esbuild src/smoke-cli.ts --bundle --outfile=out/smoke-cli.js --alias:vscode=./src/headless-vscode.ts --format=cjs --platform=node --target=node18 --minify && npm run build:preview && node scripts/build-asset-manifest.mjs",
+    "package:vsix": "vsce package --no-dependencies",
+    "verify:vsix": "node scripts/verify-vsix.mjs",
+    "doctor": "node out/doctor-cli.js",
+    "lint": "eslint src --ext ts,js",
+    "test:regressions": "node scripts/check-template-regressions.mjs",
+    "test:stability": "node scripts/check-shortcuts-and-commands.mjs",
+    "test:errors": "npm run compile && node scripts/check-error-parsing.mjs",
+    "test:preamble": "npm run compile && node scripts/check-preamble-merge.mjs",
+    "test:installer": "bash -n scripts/install-inkwell-macos.sh && bash -n scripts/compile-demo.sh && bash -n scripts/compile-all-demos.sh",
+    "verify": "npm run typecheck && npm run lint && npm run test:regressions && npm run test:stability && npm run test:errors && npm run test:preamble && npm run test:installer && npm run test:behavior",
+    "test:behavior": "npm run compile && npm run build:preview && node --test tests/*.test.cjs tests/*.test.mjs",
+    "test:demos": "bash scripts/compile-all-demos.sh",
+    "build:preview": "node scripts/build-preview-assets.mjs"
+  },
+  "dependencies": {
+    "csv-parse": "7.0.2",
+    "htmlparser2": "10.1.0",
+    "markdown-it": "^14.1.0",
+    "yaml": "2.9.0"
+  },
+  "devDependencies": {
+    "@eslint/js": "^10.0.1",
+    "@types/markdown-it": "^14.1.2",
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "3.9.2",
+    "ajv": "6.14.0",
+    "esbuild": "^0.27.3",
+    "eslint": "^10.0.3",
+    "globals": "^17.4.0",
+    "highlight.js": "11.12.0",
+    "husky": "^9.1.7",
+    "katex": "0.18.7",
+    "mermaid": "11.17.2",
+    "pdfjs-dist": "6.3.289",
+    "typescript": "^5.3.0",
+    "typescript-eslint": "^8.56.1"
+  }
+}

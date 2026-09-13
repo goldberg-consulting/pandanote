@@ -1,0 +1,28 @@
+{
+  "name": "Tufte Handout",
+  "description": "Edward Tufte-inspired handout with wide margins, sidenotes, and margin figures. Uses the tufte-handout class from CTAN.",
+  "documentclass": "tufte-handout",
+  "engine": "pdflatex",
+  "features": [
+    {
+      "pattern": "\\\\newthought\\{",
+      "syntax": "\\newthought{Text}",
+      "description": "Small-caps paragraph opener (tufte-handout class)"
+    },
+    {
+      "pattern": "\\\\marginnote\\{",
+      "syntax": "\\marginnote{Text}",
+      "description": "Unnumbered margin note (tufte-handout class)"
+    },
+    {
+      "pattern": ":::.*\\.fullwidth",
+      "syntax": "::: {.fullwidth}",
+      "description": "Full-width block extending into margins (tufte-handout class)"
+    },
+    {
+      "pattern": "\\\\begin\\{marginfigure\\}",
+      "syntax": "\\begin{marginfigure}",
+      "description": "Figure placed in the margin (tufte-handout class)"
+    }
+  ]
+}

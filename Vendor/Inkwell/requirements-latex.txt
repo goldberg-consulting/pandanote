@@ -1,0 +1,170 @@
+# LaTeX packages required by Inkwell templates.
+# These are tlmgr package names (not .sty filenames).
+#
+# Install all at once:
+#   sed 's/#.*//' requirements-latex.txt | xargs tlmgr install && texhash
+
+# core (usually present but TinyTeX minimal installs may lack them)
+geometry
+hyperref
+babel
+# English language file. On a full TeX Live / MacTeX install this
+# ships with the base `babel` package. On a minimal TinyTeX install it
+# ships as a separate `babel-english` package, so rho / rmxaa / any
+# template that loads `\usepackage[english]{babel}` fails with
+# "Unknown option 'english'" until this is installed.
+babel-english
+# Spanish language files. Required by the rho and rmxaa templates even
+# when the document is authored in English: rhobabel.sty contains
+# \iflanguage{spanish}{...}{...} branches, and \iflanguage is a hard
+# error when the language is not declared to babel. babel-spanish
+# provides the language definition; hyphen-spanish prevents "No
+# hyphenation patterns were preloaded for Spanish" warnings from
+# turning into run-length pagination drift.
+babel-spanish
+hyphen-spanish
+iftex
+
+# layout and formatting
+fancyhdr
+titlesec
+setspace
+etoolbox
+enumitem
+float
+xcolor
+xurl
+parskip
+framed
+fancyvrb
+fvextra
+booktabs
+caption
+microtype
+mdframed
+zref
+needspace
+titling
+lettrine
+lineno
+footmisc
+adjustbox
+lastpage
+listings
+csquotes
+ragged2e
+tcolorbox
+colortbl
+mathtools
+thmtools
+here
+multirow
+environ
+abstract
+bookmark
+cleveref
+natbib
+adforn
+xifthen
+ccicons
+imakeidx
+fontawesome5
+orcidlink
+pdflscape
+chemfig
+circuitikz
+supertabular
+matlab-prettifier
+lipsum
+hardwrap
+units
+silence
+pbalance
+extsizes
+fixtounicode
+# Required by `adforn` (rho's ornamental glyph package) which itself
+# pulls in `svn-prov.sty`. Minimal TinyTeX does not ship svn-prov in
+# the base install.
+svn-prov
+# Required by the default pandoc --template flow (the LaTeX that
+# pandoc emits for our markdown uses \xs@string operations on TinyTeX
+# minimal installs that otherwise report "File `xstring.sty' not
+# found").
+xstring
+# fix2col is obsolete: its fixes have been in the LaTeX kernel since 2015.
+# No bundled template imports it. https://ctan.org/pkg/fix2col?lang=en
+
+# bundles (provide multiple .sty files each)
+# amsfonts -> amssymb.sty, amsfonts.sty
+# amscls -> amsthm.sty
+# tools -> array.sty, calc.sty, longtable.sty, multicol.sty
+# preprint -> authblk.sty, balance.sty
+# sttools -> stfloats.sty, flushend.sty
+# graphics -> rotating.sty, graphicx.sty
+# oberdiek -> iflang.sty
+# psnfss -> helvet.sty, mathpazo.sty, times.sty
+amsfonts
+amscls
+tools
+preprint
+sttools
+graphics
+oberdiek
+psnfss
+
+# fonts
+fontspec
+mathpazo
+palatino
+bera
+soul
+stix2-type1
+tex-gyre
+# cm-super provides Type 1 versions of Computer Modern that microtype
+# can expand. Without it, pdftex reports:
+#   "pdfTeX error (font expansion): auto expansion is only possible
+#    with scalable fonts"
+# and refuses to produce a PDF. Hit by the eth-report template on
+# minimal TinyTeX.
+cm-super
+
+# ETH report dependencies
+koma-script
+babel-german
+stringstrings
+listofitems
+translations
+totcount
+ltabptch
+accsupp
+floatrow
+textcase
+subcaption
+tabularx
+
+# EPS support. The kth-letter template embeds an .eps logo; under
+# pdflatex this requires epstopdf.sty (epstopdf-pkg) plus the epstopdf
+# conversion script. The script also needs Ghostscript on PATH (ships
+# with MacTeX; `brew install ghostscript` / `apt install ghostscript`
+# otherwise).
+epstopdf-pkg
+epstopdf
+
+# hipster-cv template dependencies. The simplehipstercv class draws its
+# sidebar, timeline, and info bubbles with TikZ (pgf) and FontAwesome
+# icons, sets the body in Raleway, and lays out the two columns with
+# paracol. smartdiagram and tikz-3dplot are loaded by the class's style
+# file for its bubble-diagram helpers.
+fontawesome
+raleway
+# raleway's .sty defaults to the LY1 font encoding; ly1 provides
+# ly1enc.def, which full TeX Live ships but minimal TinyTeX does not
+# ("Encoding file 'ly1enc.def' not found" at \ProcessOptions).
+ly1
+paracol
+smartdiagram
+tikz-3dplot
+pgf
+
+# document classes
+tufte-latex

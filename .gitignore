@@ -1,0 +1,12 @@
+.build/
+.swiftpm/
+build/
+dist/
+*.xcodeproj/
+.DS_Store
+Engine/runtime/
+Engine/node_modules/
+node_modules/
+*.p12
+*.p8
+.env*

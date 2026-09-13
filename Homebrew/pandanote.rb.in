@@ -1,0 +1,17 @@
+cask "pandanote" do
+  version "@VERSION@"
+  sha256 "@SHA256@"
+
+  url "@URL@"
+  name "Pandanote"
+  desc "Native Markdown workspace with code variables and Inkwell publishing"
+  homepage "https://github.com/goldberg-consulting/pandanote"
+
+  depends_on macos: :sequoia
+
+  app "Pandanote.app"
+  uninstall quit: "com.goldbergconsulting.pandanote"
+
+  # Notes, history, keys, preferences, and macOS permissions survive upgrades.
+  # This local cask installs a verified Developer ID signed build.
+end

@@ -1,0 +1,15 @@
+# Pandanote symbol
+
+Generated and edited with the built-in image-generation tool on September 11, 2026. The user requested a black-and-white sketched panda, then a mohawk and Terminator laser eye. Final artwork: `PandaSketch.png`; the first sketch is preserved as `PandaSketch-original.png`. Mac icon sizes are generated from the final artwork.
+
+## Prompt
+
+Use case: logo-brand. Asset type: macOS app icon and application symbol for Pandanote, a native Markdown writing and research app. Primary request: a black and white sketched panda. Create a single centered panda head, with just a hint of shoulders, hand-drawn in expressive black ink and graphite on pure white. Distinct rounded ears and dark eye patches, thoughtful gentle expression, restrained irregular pen contours, a little crosshatching and pencil grain. Elegant literary sketch, confident and charming, not childish, not glossy, not 3D, not geometric vector clipart. Bold simple silhouette recognizable at small Dock sizes; sparse detail; face occupies roughly 75 percent of a square image with clean white margin all around. Strictly black, white, and neutral gray only, no other colors. White background, no border, no text, no letters, no watermark, no objects, no bamboo, no notebook, no app mockup. Deliver one finished square icon artwork.
+
+## Mohawk and cybernetic eye edit
+
+Edit target: the attached Pandanote panda sketch. Keep this exact panda's identity, head proportions, gentle expression, shoulders, black-and-white pencil-and-ink sketch texture, and clean isolated square icon composition. Change only two things: (1) add a prominent punk mohawk of upright pointed black hair/fur down the center of the head between the rounded ears, drawn with the same rough ink and graphite strokes; (2) replace the panda's left eye (on the viewer's right) with a Terminator-style cybernetic laser eye: a small exposed metallic socket and a sharply glowing red lens with a restrained red horizontal flare. The red laser eye is the ONLY color; everything else remains black, white, and neutral gray. Make the mohawk clearly visible without cropping any spikes; preserve a little margin around all edges. Keep the original transparent background, genuine alpha. No text, no border, no extra objects, no full robot face, no gore. It should still feel like the same charming hand-sketched panda, now a little rebellious.
+
+## Final background correction
+
+Edit this exact panda artwork and preserve the panda, tall black punk mohawk, red Terminator cybernetic laser eye, all face proportions and every sketch detail. Fix ONLY the backdrop and margin: remove the gray checkerboard completely and replace it with a perfectly flat pure WHITE (#FFFFFF) background. No checkerboard, no grid, no texture or pattern in the background, no shadow. Keep the whole mohawk inside the frame with a comfortable small white margin above the tallest spike. Keep the square format. This is final Mac app icon artwork. Do not add any words, border, objects, or further colors.
