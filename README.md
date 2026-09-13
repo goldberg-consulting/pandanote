@@ -10,6 +10,11 @@ runtime. A separate Node process hosts the existing Inkwell publishing engine so
 documents, templates, executable blocks, and bibliography rules remain shared
 with the extension.
 
+![Pandanote's native Markdown editor and live preview](docs/screenshots/01-editor.jpg)
+
+[Screenshot gallery](docs/SCREENSHOTS.md) · [Feature inventory](docs/FEATURES.md) ·
+[Web and ShareLaTeX roadmap](docs/WEB-ROADMAP.md)
+
 ## Run the app
 
 The current source version is **0.3.0 (4)**. This repository includes the native
@@ -54,6 +59,11 @@ parity. It is built for macOS 15 or newer. Apple Intelligence integration needs
 macOS 26 and an available on-device model. The current build targets Apple Silicon.
 
 ## Implemented
+
+For a dated inventory of implemented, partial, and remaining features, see
+[Feature inventory](docs/FEATURES.md). The proposed
+[hosted edition and ShareLaTeX compatibility roadmap](docs/WEB-ROADMAP.md) covers
+portable LaTeX projects, browser editing, collaborative review, and server compilation.
 
 - Native source editing, syntax colors, undo, find, spellchecking, macOS Writing
   Tools, source/reading/split layouts, adjustable fonts, system/light/dark appearance.
