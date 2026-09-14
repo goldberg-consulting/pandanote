@@ -206,8 +206,16 @@ Open the inspector's **Variables** tab, or **Writing → Inspect Code Variables*
 The panel shows names, types, bounded value previews, and the originating block.
 Filter the list, jump to its code, or choose **Insert Reference** to place a value
 in Markdown prose. **How to Use…** provides copyable Markdown and Python examples.
-Every variable has a stable `pv_…` reference derived from its document, block ID,
-and original name. A rerun updates the value while retaining that reference;
+New prose references use readable names, such as `{planning.weekly_minutes}`.
+Add a format to control the displayed value: `{planning.weekly_minutes:.0f}` rounds
+to a whole number, `:.2f` keeps two decimal places, and `:,.2f` also groups thousands.
+The variable's **… → Insert with Format** menu provides common formats; **How to
+Use…** includes copyable examples. See [Cell references](docs/CELL-REFERENCES.md)
+for percentages, scientific notation, significant digits, and rounding rules.
+
+Every variable also retains an internal `pv_…` ID derived from its document, block
+ID, and original name; existing `{{pv_…}}` references still work. Rerunning updates
+the value. Renaming a cell or variable requires updating readable references;
 the run ID and fingerprint separately identify the saved result.
 
 To give a block a friendly name, set its ID explicitly:
@@ -250,7 +258,7 @@ objects are not transferred into later processes.
 The runnable example is [Examples/CodeVariables.md](Examples/CodeVariables.md).
 The native panel was verified with arithmetic, a dependent percentage calculation,
 automatic IDs for ordinary fences, reference insertion, and a real compiled PDF
-containing the resolved value. All 30 Engine tests pass, including 14 regressions
+containing the resolved value. All 35 Engine tests pass, including regressions
 for variable capture, typed reuse, collisions, stale and tampered results, failed
 reruns, exact numeric values, and previews that never launch an interpreter.
 
@@ -431,7 +439,7 @@ swift test --disable-sandbox
 node --test Engine/tests/*.test.mjs
 ```
 
-All 132 Swift tests pass, including variable inspection and insertion, stale-response
+All 133 Swift tests pass, including readable/formatted variable insertion, variable inspection, stale-response
 rejection, partial-run identity persistence, editing during execution, cancellation
 and bounds for obsolete preview processes, marked-text replacement and undo,
 literal/regex and multiline search, Unicode word
@@ -455,6 +463,11 @@ comment/body preservation, legacy aliases, invalid values, and template locks.
 `node Scripts/verify-publication.mjs` compiles Default, Rho, and RMxAA documents
 with custom preambles, math, captioned tables, and uncaptioned tables using the
 actual installed Pandoc/TeX toolchain.
+
+`node Scripts/verify-variable-references.mjs` verifies readable cell references,
+rounding, percentages, scientific notation, exact large integers, literal examples,
+legacy inline Python, and unresolved-reference warnings in preview and a real PDF.
+It uses `pdftotext` when available, or the Mac's PDFKit through Swift for text extraction.
 
 An integration fixture in `build/SmokeVault` has rendered HTML, executed Python,
 and produced `Verification.pdf` through the actual Inkwell compiler. The native

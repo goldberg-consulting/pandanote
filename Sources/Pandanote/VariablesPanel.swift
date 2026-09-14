@@ -151,6 +151,13 @@ struct VariablesPanel: View {
                     Button("Copy Preview") { copy(variable.preview) }
                     Button("Copy Markdown Reference") { copy(variable.reference) }.disabled(!canUse(block) || !variable.reusable)
                     Button("Copy Python Reference") { copy(variable.pythonReference) }.disabled(!canUse(block) || !variable.reusable)
+                    if variable.formattedReference(.decimal) != nil {
+                        Menu("Insert with Format") {
+                            ForEach(CodeVariableFormat.allCases) { format in
+                                Button(format.title) { workspace.insertVariable(variable, from: block, format: format) }
+                            }
+                        }.disabled(!canUse(block) || !variable.reusable || workspace.fileOperationInProgress)
+                    }
                     Button("How to Use…") { detail = VariableDetail(block: block, variable: variable) }
                 } label: { Image(systemName: "ellipsis") }
                 .menuStyle(.borderlessButton).fixedSize()
@@ -190,13 +197,20 @@ private struct VariableReferenceView: View {
                     example("Saved preview", variable.preview)
                     if variable.reusable {
                         example("In Markdown prose", variable.reference)
-                        Text("The preview and PDF substitute the value. The reference stays the same when you rerun this block.")
+                        Text("Use {cell_id.variable_name} in prose. Give the cell a name with id=\"\(block.id)\" in its opening fence. Rerunning updates the value; renaming the cell or variable requires updating its references. Code examples in backticks stay literal.")
                             .font(.callout).foregroundStyle(.secondary)
+                        if variable.formattedReference(.decimal) != nil {
+                            ForEach(CodeVariableFormat.allCases) { format in
+                                if let reference = variable.formattedReference(format) { example(format.title, reference) }
+                            }
+                            Text("Edit the number after the dot for 0–12 decimal places, or 1–12 significant digits with g. A comma groups thousands; + shows positive signs. Percent multiplies by 100. Formatting rounds the captured decimal value to nearest, with ties to even, and never changes the Python value. For custom text or dates, format a string in Python and reference that variable.")
+                                .font(.callout).foregroundStyle(.secondary)
+                        }
                         example("In another Python block", "```{python depends-on=\"\(block.id)\"}\nvalue = \(variable.pythonReference)\nprint(value)\n```")
                         Text("The dependency runs first and supplies its captured value. Variables with the same name in different blocks remain separate.")
                             .font(.callout).foregroundStyle(.secondary)
                     }
-                    example("Unique reference ID", variable.id)
+                    example("Legacy reference (still supported)", "{{\(variable.id)}}")
                 }
             }
             HStack { Spacer(); Button("Done") { dismiss() }.keyboardShortcut(.defaultAction) }

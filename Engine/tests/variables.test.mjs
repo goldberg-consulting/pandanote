@@ -33,7 +33,7 @@ test('plain Python captures arithmetic without changing stdout and creates durab
   assert.deepEqual(block.variables.map(value => [value.name,value.type,value.preview]),[['a','float','3.0'],['b','int','23'],['c','float','0.13043478260869565']]);
   for (const variable of block.variables) {
     assert.match(variable.id,/^pv_[a-f0-9]{24}$/);
-    assert.equal(variable.reference,'{{'+variable.id+'}}');
+    assert.equal(variable.reference,'{'+block.id+'.'+variable.name+'}');
     assert.equal(variable.reusable,true);
   }
   const preview = call('preview',first.text+'\n\nResult: '+block.variables[2].reference);
@@ -44,6 +44,47 @@ test('plain Python captures arithmetic without changing stdout and creates durab
   assert.equal(cached.results[0].cached,true);
   assert.equal(cached.variableBlocks[0].runID,block.runID);
   assert.equal(cached.variableBlocks[0].variables[2].id,block.variables[2].id);
+  assert.match(call('preview',first.text+'\n\nLegacy: {{'+block.variables[2].id+'}}').html,/Legacy: 0\.13043478260869565/);
+});
+
+test('named cell references format prose and preserve code examples and missing values',t => {
+  const {call} = fixture(t);
+  const source = [
+    '```{python id="sessions" display="none"}', 'average = 25.0', '```',
+    '```{python id="planning" depends-on="sessions" display="none"}',
+    'weekly_sessions = 5\nweekly_minutes = pandanote["sessions"]["average"] * weekly_sessions\nlabel = "Five sessions"\nratio = 0.256', '```',
+  ].join('\n');
+  const result = call('run',source,{trusted:true});
+  assert.equal(result.success,true,JSON.stringify(result));
+  const prose = source + '\n\nMinutes: {planning.weekly_minutes:.0f}. Precise: {planning.weekly_minutes:.2f}. Percent: {planning.ratio:.1%}.\n\n'
+    + 'Label: {planning.label}. Escaped underscore: {planning.weekly\\_minutes:.0f}.\n\n'
+    + '`{planning.weekly_minutes:.2f}`\n\n```text\n{planning.weekly_minutes}\n```\n\n'
+    + '> ```text\n> {planning.weekly_minutes}\n> ```\n\n    {planning.weekly_minutes}\n\n'
+    + '\\{planning.weekly_minutes} {{planning.weekly_minutes}}\n\n'
+    + 'Missing: {planning.typo}. Bad format: {planning.weekly_minutes:.99f}. String format: {planning.label:.2f}.';
+  const preview = call('preview',prose);
+  assert.equal(preview.success,true,JSON.stringify(preview));
+  assert.match(preview.html,/Minutes: 125\. Precise: 125\.00\. Percent: 25\.6%/);
+  assert.match(preview.html,/Label: Five sessions\. Escaped underscore: 125\./);
+  assert.match(preview.html,/<code>\{planning.weekly_minutes:\.2f\}<\/code>/);
+  assert.equal((preview.html.match(/<code[^>]*>\{planning.weekly_minutes\}\n<\/code>/g)||[]).length,3);
+  for (const literal of ['{planning.typo}','{planning.weekly_minutes:.99f}','{planning.label:.2f}','{{planning.weekly_minutes}}']) assert.ok(preview.html.includes(literal));
+  assert.deepEqual(preview.diagnostics.filter(d => d.message.startsWith('Unresolved reference')).map(d => d.message.split(': ')[0]),
+    ['Unresolved reference planning.typo','Unresolved reference planning.weekly_minutes:.99f','Unresolved reference planning.label:.2f']);
+  const stale = call('preview',prose.replace('average = 25.0','average = 30.0'));
+  assert.ok(stale.html.includes('{planning.weekly_minutes:.0f}'));
+  assert.deepEqual(stale.variableBlocks.map(b => b.status),['stale','stale']);
+});
+
+test('ambiguous or renamed cells never bind another cell by accident',t => {
+  const {call} = fixture(t);
+  const source = '```{python id="one"}\na=1\n```\n\n```{python id="two"}\na=2\n```';
+  assert.equal(call('run',source,{trusted:true}).success,true);
+  assert.match(call('preview',source+'\n\n{one.a}, {two.a}').html,/1, 2/);
+  const duplicate = call('preview',source.replace('id="two"','id="one"')+'\n\n{one.a}');
+  assert.ok(duplicate.html.includes('{one.a}'));
+  const renamed = call('preview',source.replace('id="one"','id="new"')+'\n\n{one.a} {new.a}');
+  assert.ok(renamed.html.includes('{one.a} {new.a}'));
 });
 
 test('variable IDs differ across blocks and notes and survive value changes',t => {

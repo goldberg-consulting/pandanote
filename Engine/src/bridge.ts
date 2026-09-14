@@ -11,7 +11,7 @@ import { configure, Uri } from './native-host';
 import { compile } from '../../Vendor/Inkwell/src/compiler';
 import { runAllBlocks, parseCodeBlocks, RunCancellation } from '../../Vendor/Inkwell/src/runner';
 import { applyRunTextEdits, planBlockIdentities } from '../../Vendor/Inkwell/src/run-authoring';
-import { prepareForPreview } from '../../Vendor/Inkwell/src/inject';
+import { prepareForPreview, collectUnresolvedVars } from '../../Vendor/Inkwell/src/inject';
 import { getDocumentConfig, getInkwellProjectRoot } from '../../Vendor/Inkwell/src/config';
 import { listTemplates } from '../../Vendor/Inkwell/src/templates';
 import { bibliographyService } from '../../Vendor/Inkwell/src/bibliography-service';
@@ -102,7 +102,9 @@ async function handle(request: any): Promise<any> {
           return tag.replace(src, `data:${mime[ext]};base64,${fs.readFileSync(image).toString('base64')}`);
         } catch { return '<em>Image unavailable</em>'; }
       });
-      return { success: true, html: page(rendered, buildTypographyCss(config)), blocks: parseCodeBlocks(text), variableBlocks:variableBlocks(), diagnostics: config.diagnostics, template:config.capabilities.name, engine:config.engine };
+      const referenceDiagnostics = collectUnresolvedVars(prepared).map(key => ({severity:'warning',
+        message:`Unresolved reference ${key}: run the cell, check its ID and variable name, and use a supported numeric format such as .2f.`}));
+      return { success: true, html: page(rendered, buildTypographyCss(config)), blocks: parseCodeBlocks(text), variableBlocks:variableBlocks(), diagnostics: [...config.diagnostics,...referenceDiagnostics], template:config.capabilities.name, engine:config.engine };
     }
     case 'compile': {
       if (!request.trusted) throw new Error('Choose Build PDF to authorize compilation and document expressions.');

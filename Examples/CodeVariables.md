@@ -17,11 +17,18 @@ percent = ratio * 100
 print(percent)
 ```
 
-Place the cursor below, then choose **Insert Reference** beside `c` in the Variables
-tab. Its value appears in the preview and PDF. The inserted reference stays the
-same when the value changes on a later run.
+Choose **Insert Reference** beside `c` in the Variables tab, or write the readable
+reference directly as shown below. Its value appears in the preview and PDF and
+updates when the cell is rerun.
 
 The calculated ratio is:
+
+{arithmetic.c:.4f}
+
+As a percentage: {arithmetic.c:.2%}. With three significant digits: {arithmetic.c:.3g}.
+
+References use the cell ID and variable name. Change the number after the dot to
+control precision. Backticks keep an example literal: `{arithmetic.c:.4f}`.
 
 Ordinary Python fences also work. Pandanote adds a block ID on the first run.
 

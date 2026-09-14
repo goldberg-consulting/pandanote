@@ -611,12 +611,17 @@ enum InspectorTab: String, CaseIterable { case outline = "Outline", inkwell = "I
         findReplace.close()
         inspector = .variables; showInspector = true
     }
-    func insertVariable(_ variable: CodeVariable, from block: CodeVariableBlock) {
+    func insertVariable(_ variable: CodeVariable, from block: CodeVariableBlock, format: CodeVariableFormat? = nil) {
         guard !fileOperationInProgress, variablesMatchDocument, block.status == "current", variable.reusable,
               variableBlocks.contains(where: { $0.id == block.id && $0.variables.contains(variable) }) else { return }
+        let reference: String
+        if let format {
+            guard let formatted = variable.formattedReference(format) else { return }
+            reference = formatted
+        } else { reference = variable.reference }
         if mode == .reading { mode = .source }
         showPDF = false
-        editorInsertion = variable.reference
+        editorInsertion = reference
     }
     func jumpToCodeBlock(_ block: CodeVariableBlock) {
         guard variablesMatchDocument, block.startLine > 0 else { return }

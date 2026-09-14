@@ -36,7 +36,7 @@ final class CodeVariablesTests: XCTestCase {
           const current = prepared.includes('id="analysis"');
           const variableBlocks = prepared.includes('a =') ? [{ id:'analysis',index:0,startLine:3,language:'python',
             runID:'test-run',fingerprint:'test-fingerprint',status:current?'current':'not-run',variables:current?[
-              {id:'pv_123',name:'a',type:'float',preview:'3.0',reusable:true,reference:'{{pv_123}}',pythonReference:"pandanote['analysis']['a']"}]:[] }] : [];
+              {id:'pv_123',name:'a',type:'float',preview:'3.0',reusable:true,reference:'{analysis.a}',pythonReference:"pandanote['analysis']['a']"}]:[] }] : [];
           if (r.action === 'run') fs.writeFileSync(r.root + '/run-started', 'yes');
           setTimeout(() => console.log(JSON.stringify({success:!r.text.includes('FAIL_CODE'),message:r.text.includes('FAIL_CODE')?'One block failed':'Run complete',
             html:'<p>Values</p>',text:r.action==='run'?prepared:undefined,variableBlocks})), r.text.includes('DELAY') ? 900 : 0);
@@ -59,15 +59,28 @@ final class CodeVariablesTests: XCTestCase {
         let variable = try XCTUnwrap(block.variables.first)
         XCTAssertEqual(variable.preview, "3.0")
         workspace.insertVariable(variable, from: block)
-        XCTAssertEqual(workspace.editorInsertion, "{{pv_123}}")
+        XCTAssertEqual(workspace.editorInsertion, "{analysis.a}")
+        workspace.insertVariable(variable, from: block, format: .grouped)
+        XCTAssertEqual(workspace.editorInsertion, "{analysis.a:,.2f}")
         workspace.editorInsertion = nil
         workspace.edit(workspace.text + "\nNew writing")
         XCTAssertFalse(workspace.variablesMatchDocument)
-        workspace.insertVariable(variable, from: block)
+        workspace.insertVariable(variable, from: block, format: .percentage)
         XCTAssertNil(workspace.editorInsertion)
         workspace.showVariables()
         XCTAssertEqual(workspace.inspector, .variables)
         XCTAssertTrue(workspace.showInspector)
+    }
+    func testNumericFormatsDoNotCoerceStringsOrRewriteLegacyReferences() throws {
+        func variable(_ type: String, _ reference: String) throws -> CodeVariable {
+            let data = try JSONSerialization.data(withJSONObject: ["id":"pv_123", "name":"a", "type":type,
+                "preview":"3", "reusable":true, "reference":reference, "pythonReference":"pandanote['analysis']['a']"])
+            return try JSONDecoder().decode(CodeVariable.self, from: data)
+        }
+        XCTAssertEqual(try variable("int", "{analysis.a}").formattedReference(.whole), "{analysis.a:.0f}")
+        XCTAssertEqual(try variable("float", "{analysis.a}").formattedReference(.percentage), "{analysis.a:.1%}")
+        XCTAssertNil(try variable("str", "{analysis.a}").formattedReference(.decimal))
+        XCTAssertNil(try variable("float", "{{pv_123}}").formattedReference(.decimal))
     }
     @MainActor func testCodeBlockNavigationUsesUTF16LineOffsets() async throws {
         let (workspace, _, _) = try await fixture()

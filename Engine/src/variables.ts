@@ -9,12 +9,12 @@ import { parseQuotedAttrs, parseRunList } from '../../Vendor/Inkwell/src/run-att
 import { getDocumentConfig, getInkwellProjectRoot } from '../../Vendor/Inkwell/src/config';
 import { applyBlockOverrides } from '../../Vendor/Inkwell/src/document-config';
 import { PYTHON_CAPTURE, PYTHON_CAPTURE_VERSION, VARIABLE_ARTIFACT } from './python-capture';
+import { type SavedValue, renderSavedValue, namedReference, registerNamedVariables } from './variable-references';
 
 export { PYTHON_CAPTURE_VERSION };
 const digest = (value: unknown) => sha256(JSON.stringify(value));
 const MAX_SNAPSHOT = 2 * 1024 * 1024;
 const object = (value: unknown): value is Record<string, any> => value !== null && typeof value === 'object' && !Array.isArray(value);
-type SavedValue = { kind: 'none'|'int'|'float'|'str'|'bool'|'list'|'dict'; value?: any };
 type CapturedVariable = { name: string; type: string; preview: string; reusable: boolean; value?: SavedValue };
 type Snapshot = { schemaVersion: 1; documentIdentity: string; blockId: string; variables: CapturedVariable[]; omitted: number };
 export type VariableDescription = { id: string; name: string; type: string; preview: string; reusable: boolean; reference: string; pythonReference: string };
@@ -336,7 +336,7 @@ export function variableBlocks(runResults: BlockResult[] = []): VariableBlock[] 
         const collection = variable.reusable && variable.value && ['list','dict'].includes(variable.value.kind) ? renderSavedValue(variable.value) : undefined;
         const preview = collection === undefined ? variable.preview : collection.length > 500 ? collection.slice(0,499)+'…' : collection;
         return { id,name:variable.name,type:variable.type,preview,reusable:variable.reusable && status === 'current',
-          reference:'{{'+id+'}}',pythonReference:`pandanote[${JSON.stringify(block.id || block.label)}][${JSON.stringify(variable.name)}]` };
+          reference:namedReference(block.id || block.label!,variable.name) || '{{'+id+'}}',pythonReference:`pandanote[${JSON.stringify(block.id || block.label)}][${JSON.stringify(variable.name)}]` };
       }),
       message:failed ? failed.stderr.slice(0,1000) : savedFailure || record?.stale || (record?.snapshot?.omitted ? `${record.snapshot.omitted} variables omitted by the capture limit.` : record ? undefined : 'Run this block to capture its variables.') };
   });
@@ -348,8 +348,8 @@ export function nativeCachedResults(): BlockResult[] {
   return [...currentRecords(context).values()].filter(record => !record.stale).map(record => record.result);
 }
 
-export function supplementalVariables(results: BlockResult[]): Map<string,string> {
-  const values = new Map<string,string>();
+export function addNativeVariables(values: Map<string,string>, results: BlockResult[]): Map<string,string> {
+  const named = new Map<string,SavedValue>();
   if (!context) return values;
   const records = currentRecords(context);
   const permitted = new Set(results.filter(result => result.exitCode === 0 && result.cacheStatus !== 'miss').map(result => result.blockId || result.block.id || result.block.label));
@@ -359,21 +359,11 @@ export function supplementalVariables(results: BlockResult[]): Map<string,string
       if (!variable.reusable || !variable.value) continue;
       const value = renderSavedValue(variable.value);
       values.set(variableID(context.identity,blockID,variable.name),value);
+      if (namedReference(blockID,variable.name)) named.set(blockID + '.' + variable.name,variable.value);
     }
   }
+  registerNamedVariables(values,named);
   return values;
-}
-
-/** JSON text for collections preserves integer precision without executing values. */
-function renderSavedValue(value: SavedValue, nested = false): string {
-  switch (value.kind) {
-    case 'none': return 'null';
-    case 'str': return nested ? JSON.stringify(value.value) : value.value;
-    case 'int': return value.value;
-    case 'float': case 'bool': return String(value.value);
-    case 'list': return '[' + value.value.map((item: SavedValue) => renderSavedValue(item,true)).join(', ') + ']';
-    case 'dict': return '{' + value.value.map(([key,item]: [string,SavedValue]) => JSON.stringify(key) + ': ' + renderSavedValue(item,true)).join(', ') + '}';
-  }
 }
 
 /** Called from the native bundle's guarded runner patch, immediately before execution. */

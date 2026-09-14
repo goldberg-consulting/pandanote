@@ -7,6 +7,12 @@ hosted edition or complete MinkNote/Overleaf parity has shipped.
 
 [View five screenshots of the current app](SCREENSHOTS.md).
 
+**14 September update:** prose can now use `{cell_id.variable_name}` references
+with optional number formatting, such as `{planning.weekly_minutes:.0f}`.
+The Variables panel includes format presets and guidance. See
+[Cell references](CELL-REFERENCES.md). The inventory below otherwise retains its
+13 September audit scope.
+
 **Implemented** means connected to the current app, with the qualifications below.
 **Partial** means a useful workflow exists but the larger requested capability is
 unfinished. **Remaining** means product work is still required. These are feature
@@ -173,7 +179,7 @@ The source review covered [workspace/editor UI](../Sources/Pandanote/WorkspaceVi
 [native engine bridge](../Engine/src/bridge.ts), and
 [upstream compilation](../Vendor/Inkwell/src/compiler.ts).
 
-The most recent source verification recorded **132 Swift tests and 30 engine
+The 13 September source verification recorded **132 Swift tests and 30 engine
 tests passing**. These cover important recovery, background publishing, search,
 AI context, Git, and variable workflows, but do not establish full product parity.
 See the [README verification notes](../README.md#verification) for live checks and

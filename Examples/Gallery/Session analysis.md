@@ -27,9 +27,11 @@ weekly_minutes = pandanote["sessions"]["average"] * weekly_sessions
 print(f"Five sessions would take {weekly_minutes:.0f} minutes.")
 ```
 
-Place the cursor below and choose **Insert Reference** beside `average`:
+Use the cell ID and variable name in prose, with an optional numeric format:
 
-The mean session length is:
+The mean session length is {sessions.average:.1f} minutes.
+
+Five sessions would take {planning.weekly_minutes:.0f} minutes.
 
 Return to [[Field notes]].
 
