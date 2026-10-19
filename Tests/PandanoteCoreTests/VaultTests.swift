@@ -8,6 +8,25 @@ final class VaultTests: XCTestCase {
         addTeardownBlock { try? FileManager.default.removeItem(at: root) }
         return Vault(root: root)
     }
+    func testDirectFolderBrowsingIncludesEmptyFoldersAndIgnoresFilesAndPackages() throws {
+        let vault = try temporaryVault()
+        for name in ["Empty", "Research/Nested", ".hidden", "Example.app/Contents"] {
+            try FileManager.default.createDirectory(at: vault.root.appendingPathComponent(name), withIntermediateDirectories: true)
+        }
+        _ = try vault.create(name: "Note")
+        XCTAssertEqual(try Vault.childDirectories(in: vault.root).map(\.lastPathComponent), ["Empty", "Research"])
+        XCTAssertEqual(try Vault.validatedRoot(vault.root), vault.root)
+        XCTAssertThrowsError(try Vault.childDirectories(in: vault.root.appendingPathComponent("missing")))
+    }
+    func testVaultValidationRejectsFilesPackagesMissingAndRemoteURLs() throws {
+        let vault = try temporaryVault()
+        let file = try vault.create(name: "Note")
+        let package = vault.root.appendingPathComponent("Example.app")
+        try FileManager.default.createDirectory(at: package, withIntermediateDirectories: true)
+        for url in [file, package, vault.root.appendingPathComponent("missing"), URL(string: "https://example.com")!] {
+            XCTAssertThrowsError(try Vault.validatedRoot(url))
+        }
+    }
     func testExternalEditsCannotBeOverwrittenAndHistoryPersists() throws {
         let vault = try temporaryVault()
         let file = try vault.create(name: "Research", text: "Original")

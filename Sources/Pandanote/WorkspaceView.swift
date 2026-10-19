@@ -59,6 +59,7 @@ struct WorkspaceView: View {
         .alert("Pandanote", isPresented: Binding(get: { workspace.error != nil }, set: { if !$0 { workspace.error = nil } })) {
             Button("OK") { workspace.error = nil }
         } message: { Text(workspace.error ?? "") }
+        .sheet(isPresented: $workspace.showVaultBrowser) { VaultBrowserView(workspace: workspace) }
         .sheet(isPresented: $workspace.showHistory) { HistoryView(workspace: workspace) }
         .sheet(isPresented: $workspace.showDocumentSettings) { DocumentSettingsView(workspace: workspace) }
         .sheet(item: $workspace.reviewProposal) { proposal in RevisionReviewView(workspace: workspace, proposal: proposal) }
@@ -201,7 +202,7 @@ struct LibraryView: View {
             if !workspace.folders.isEmpty {
                 Text("FOLDERS").font(.system(size: 9, weight: .semibold)).tracking(1.3).foregroundStyle(.secondary).padding(.horizontal, 18).padding(.top, 20).padding(.bottom, 8)
                 ScrollView { VStack(spacing: 1) { ForEach(workspace.folders, id: \.self) { folder in
-                    Button { workspace.filter = "folder:" + folder } label: {
+                    Button { workspace.browseFolder(folder) } label: {
                         HStack {
                             Image(systemName: workspace.filter == "folder:" + folder ? "folder.fill" : "folder").foregroundStyle(sage.opacity(0.8))
                             Text(folder).lineLimit(1)
@@ -216,7 +217,7 @@ struct LibraryView: View {
                                 WorkspaceItemMenu(workspace: workspace, url: root.appendingPathComponent(folder, isDirectory: true), isDirectory: true)
                             }
                         }
-                } } }.frame(maxHeight: 90)
+                } } }.frame(minHeight: 90, idealHeight: 150, maxHeight: 220)
             }
             HStack { Text(workspace.query.isEmpty ? "NOTES" : "RESULTS").tracking(1.3); Spacer(); Text("\(workspace.filteredNotes.count)") }.font(.system(size: 9, weight: .semibold)).foregroundStyle(.secondary).padding(.horizontal, 18).padding(.top, 22).padding(.bottom, 8)
             ScrollView {
@@ -253,6 +254,7 @@ struct LibraryView: View {
         }.background(Color(nsColor: .windowBackgroundColor))
             .contentShape(Rectangle())
             .contextMenu { WorkspaceLibraryMenu(workspace: workspace, directory: creationDirectory) }
+            .modifier(VaultDropTarget(workspace: workspace))
     }
     func filterRow(_ name: String, icon: String, count: Int) -> some View {
         Button { workspace.filter = name } label: { HStack(spacing: 9) { Image(systemName: icon).frame(width: 16).foregroundStyle(workspace.filter == name ? sage : .secondary); Text(name); Spacer(); Text("\(count)").font(.system(size: 10)).foregroundStyle(.secondary) }.font(.system(size: 12)).padding(.horizontal, 10).padding(.vertical, 8).background(workspace.filter == name ? sage.opacity(0.10) : .clear, in: RoundedRectangle(cornerRadius: 6)) }.buttonStyle(RegionButtonStyle())
@@ -453,7 +455,7 @@ struct WelcomeView: View {
                     Button("Open a folder as a vault…") { workspace.chooseVault() }.buttonStyle(.borderedProminent).controlSize(.large)
                     Button("Create a sample vault…") { workspace.openDemo() }.controlSize(.large)
                 }.padding(.top, 12)
-                Text("Your files. Your Mac. Your words.").font(.system(size: 11)).foregroundStyle(.tertiary).padding(.top, 5)
+                Text("Drop a folder here to open it as a vault.").font(.system(size: 11)).foregroundStyle(.tertiary).padding(.top, 5)
             }
             VStack(alignment: .leading, spacing: 28) {
                 welcomeFeature("pencil.line", "Write without friction", "Native editing, Markdown, and live preview.")
@@ -462,6 +464,7 @@ struct WelcomeView: View {
                 welcomeFeature("sparkles", "Think with a collaborator", "On-device AI, local models, or your own API.")
             }.frame(width: 270)
         }.padding(60).frame(maxWidth: .infinity, maxHeight: .infinity)
+            .modifier(VaultDropTarget(workspace: workspace))
     }
     func welcomeFeature(_ icon: String, _ title: String, _ body: String) -> some View { HStack(alignment: .top, spacing: 15) { Image(systemName: icon).font(.system(size: 20)).foregroundStyle(sage).frame(width: 28); VStack(alignment: .leading, spacing: 6) { Text(title).font(.system(size: 13, weight: .semibold)); Text(body).font(.system(size: 12)).foregroundStyle(.secondary).lineSpacing(3) } } }
 }
@@ -489,5 +492,115 @@ struct HistoryView: View {
             }
             HStack { Text("Restore places the selected version in the editor.").font(.caption).foregroundStyle(.secondary); Spacer(); Button("Restore version") { workspace.edit(versionText); dismiss() }.disabled(selected == nil) }.padding(20)
         }.frame(width: 800, height: 520).onChange(of: selected) { _, url in if let url { versionText = (try? String(contentsOf: url, encoding: .utf8)) ?? "" } }
+    }
+}
+
+private struct VaultDropTarget: ViewModifier {
+    @ObservedObject var workspace: Workspace
+    @State private var targeted = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if targeted {
+                    RoundedRectangle(cornerRadius: 10).fill(sage.opacity(0.12))
+                        .overlay { RoundedRectangle(cornerRadius: 10).strokeBorder(sage, lineWidth: 2) }
+                        .overlay {
+                            Label("Open folder as vault", systemImage: "folder.badge.plus")
+                                .padding().background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
+                        }
+                        .allowsHitTesting(false)
+                }
+            }
+            .dropDestination(for: URL.self) { urls, _ in
+                workspace.acceptVaultDrop(urls)
+            } isTargeted: { targeted = $0 }
+    }
+}
+
+private struct VaultBrowserView: View {
+    @ObservedObject var workspace: Workspace
+    @Environment(\.dismiss) private var dismiss
+    @State private var directory = FileManager.default.homeDirectoryForCurrentUser
+    @State private var path = ""
+    @State private var query = ""
+    @State private var folders: [URL] = []
+    @State private var loading = true
+    @State private var browseID = UUID()
+    @State private var failure: String?
+
+    private func navigate(_ url: URL) {
+        directory = url.standardizedFileURL
+        path = directory.path
+        query = ""
+        folders = []; failure = nil; loading = true; browseID = UUID()
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            Text("Open a vault").font(.title2.bold())
+            Text("Choose any folder. Browse directly or enter its path.").foregroundStyle(.secondary)
+            HStack {
+                Button { navigate(directory.deletingLastPathComponent()) } label: { Image(systemName: "arrow.up") }
+                    .help("Parent folder").disabled(directory.path == "/")
+                Button("Home") { navigate(FileManager.default.homeDirectoryForCurrentUser) }
+                Button("Volumes") { navigate(URL(fileURLWithPath: "/Volumes", isDirectory: true)) }
+                Menu("Recent") {
+                    ForEach(workspace.recentVaults, id: \.self) { recent in
+                        Button(recent) { navigate(URL(fileURLWithPath: recent, isDirectory: true)) }
+                    }
+                }.disabled(workspace.recentVaults.isEmpty)
+            }
+            HStack {
+                TextField("Folder path", text: $path)
+                    .onSubmit { goToPath() }
+                Button("Go") { goToPath() }
+            }
+            TextField("Filter folders in this location", text: $query)
+            List {
+                ForEach(folders.filter { query.isEmpty || $0.lastPathComponent.localizedStandardContains(query) }, id: \.path) { folder in
+                    Button { navigate(folder) } label: {
+                        HStack {
+                            Label(folder.lastPathComponent, systemImage: "folder")
+                            Spacer()
+                            Image(systemName: "chevron.right").foregroundStyle(.secondary)
+                        }.contentShape(Rectangle())
+                    }.buttonStyle(.plain).padding(.vertical, 4)
+                }
+            }
+            .overlay {
+                if loading { ProgressView() }
+                else if let failure { Text(failure).foregroundStyle(.secondary).padding() }
+                else if folders.isEmpty { Text("No subfolders. You can open this folder as a vault.").foregroundStyle(.secondary) }
+                else if !query.isEmpty && !folders.contains(where: { $0.lastPathComponent.localizedStandardContains(query) }) {
+                    Text("No matching folders in this location").foregroundStyle(.secondary)
+                }
+            }
+            Text(directory.path).font(.caption).foregroundStyle(.secondary).textSelection(.enabled)
+            HStack {
+                Spacer()
+                Button("Cancel") { dismiss() }.keyboardShortcut(.cancelAction)
+                Button("Open This Folder") { workspace.openVault(directory); dismiss() }
+                    .keyboardShortcut(.defaultAction).disabled(loading || failure != nil || workspace.fileOperationInProgress)
+            }
+        }.padding(24).frame(width: 620, height: 500)
+            .onAppear { navigate(workspace.root ?? FileManager.default.homeDirectoryForCurrentUser) }
+            .task(id: browseID) {
+                let location = directory, request = browseID
+                do {
+                    let children = try await BackgroundWork.run { try Vault.childDirectories(in: location) }
+                    guard !Task.isCancelled, browseID == request else { return }
+                    folders = children; failure = nil; loading = false
+                } catch {
+                    guard !Task.isCancelled, browseID == request else { return }
+                    folders = []; failure = error.localizedDescription; loading = false
+                }
+            }
+    }
+
+    private func goToPath() {
+        let expanded = (path.trimmingCharacters(in: .whitespacesAndNewlines) as NSString).expandingTildeInPath
+        guard expanded.hasPrefix("/") else { failure = "Enter an absolute folder path, or start with ~/."; return }
+        navigate(URL(fileURLWithPath: expanded, isDirectory: true))
     }
 }

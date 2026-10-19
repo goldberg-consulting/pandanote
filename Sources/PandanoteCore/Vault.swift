@@ -42,6 +42,26 @@ public final class Vault: @unchecked Sendable {
     private static let supportedExtensions = ["md", "markdown", "txt", "tex", "bib"]
     private static let skippedDirectories = ["node_modules", "venv", ".venv", "build"]
     public init(root: URL) { self.root = root.standardizedFileURL.resolvingSymlinksInPath() }
+    /// Validate before replacing the current workspace, including URLs received from Finder.
+    public static func validatedRoot(_ url: URL) throws -> URL {
+        guard url.isFileURL else { throw VaultError.invalidDestination }
+        let root = url.standardizedFileURL.resolvingSymlinksInPath()
+        let values = try root.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey])
+        guard values.isDirectory == true, values.isPackage != true else { throw VaultError.invalidDestination }
+        // An unreadable folder must not silently become an empty vault.
+        _ = try FileManager.default.contentsOfDirectory(at: root, includingPropertiesForKeys: nil)
+        return root
+    }
+    /// Browse one level without Spotlight or a recursive content scan.
+    public static func childDirectories(in root: URL) throws -> [URL] {
+        try FileManager.default.contentsOfDirectory(at: root,
+            includingPropertiesForKeys: [.isDirectoryKey, .isPackageKey], options: [.skipsHiddenFiles])
+            .filter { url in
+                guard let values = try? url.resourceValues(forKeys: [.isDirectoryKey, .isPackageKey]) else { return false }
+                return values.isDirectory == true && values.isPackage != true
+            }
+            .sorted { $0.lastPathComponent.localizedStandardCompare($1.lastPathComponent) == .orderedAscending }
+    }
     public func contains(_ url: URL) -> Bool {
         let path = url.standardizedFileURL.resolvingSymlinksInPath().path
         return path.hasPrefix(root.path + "/")

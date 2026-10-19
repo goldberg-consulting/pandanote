@@ -17,7 +17,7 @@ with the extension.
 
 ## Run the app
 
-The current source version is **0.3.0 (4)**. This repository includes the native
+The current source version is **0.3.1 (5)**. This repository includes the native
 application, its Inkwell bridge and vendored publishing source, artwork, examples,
 tests, and build tooling.
 
@@ -34,14 +34,36 @@ The development build uses an ad hoc signature and does not require the author's
 Apple credentials. PDF publishing additionally requires Pandoc, pandoc-crossref,
 and a TeX distribution. See [Build](#build) for the full requirements.
 
-The maintainer's local Homebrew workflow installs a signed build to
-`/Applications/Pandanote.app` through `goldberg-consulting/pandanote-local/pandanote`.
-That tap is local, not a public Homebrew installation source. The versioned install
-archive is `dist/Pandanote-0.3.0-4.zip`; generated archives are excluded from Git.
-Notarization of the current 0.3.0 package is pending. Earlier notarization of
-0.2.1 does not certify a later build.
+## Install with Homebrew
 
-Open a folder as a vault, or create a sample vault from the welcome screen.
+On an Apple Silicon Mac running macOS 15 or newer:
+
+```sh
+brew install --cask goldberg-consulting/tap/pandanote
+```
+
+The public cask downloads the signed, Apple-notarized release and installs Node,
+Pandoc, and pandoc-crossref. Xcode is not required. PDF publishing additionally
+needs a TeX distribution. If none is installed:
+
+```sh
+brew install --cask mactex-no-gui
+```
+
+Download archives are also available from [GitHub Releases](https://github.com/goldberg-consulting/pandanote/releases).
+The maintainer-only `pandanote-local` tap references local files and is not needed
+on a new computer. Existing users of that tap can uninstall its cask without
+`--zap`, then install the public cask; notes and preferences remain on disk.
+
+Drop a folder from Finder onto the left library panel (or the welcome screen) to
+open it as a vault. Existing edits are saved before switching. You can also use
+**File → Open Vault…**: its folder browser reads the disk directly, without
+Spotlight. Browse folders, filter the current location by name, or enter an
+absolute path (including `~/`). Choose **Open This Folder** to use that location.
+The welcome screen can also create a sample vault.
+
+Selecting a library folder clears the previous search and shows its nested notes.
+Library search matches note contents and relative paths within the selected filter.
 Notes stay on disk as ordinary UTF-8 files. Existing Inkwell projects can be
 opened directly.
 

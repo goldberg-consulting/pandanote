@@ -8,6 +8,7 @@ enum EditorMode: String, CaseIterable { case source = "Source", split = "Side by
 enum InspectorTab: String, CaseIterable { case outline = "Outline", inkwell = "Inkwell", variables = "Variables", assistant = "Assistant" }
 
 @MainActor final class Workspace: ObservableObject {
+    @Published var showVaultBrowser = false
     @Published var root: URL?
     @Published var notes: [NoteFile] = []
     @Published var selected: URL?
@@ -82,9 +83,10 @@ enum InspectorTab: String, CaseIterable { case outline = "Outline", inkwell = "I
     var outline: [Heading] { MarkdownInfo.headings(text) }
     var relativePath: String { guard let root, let selected else { return "" }; return String(selected.path.dropFirst(root.path.count + 1)) }
     var filteredNotes: [NoteFile] {
-        notes.filter { note in
-            let filterMatches = filter == "All notes" || (filter == "Favorites" && favorites.contains(note.id)) || (filter == "Tasks" && note.text.contains("- [")) || (filter.hasPrefix("#") && note.tags.contains(String(filter.dropFirst()))) || (filter.hasPrefix("folder:") && note.folder == String(filter.dropFirst(7)))
-            return filterMatches && (query.isEmpty || (note.title + "\n" + note.text).localizedCaseInsensitiveContains(query))
+        let search = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        return notes.filter { note in
+            let filterMatches = filter == "All notes" || (filter == "Favorites" && favorites.contains(note.id)) || (filter == "Tasks" && note.text.contains("- [")) || (filter.hasPrefix("#") && note.tags.contains(String(filter.dropFirst()))) || (filter.hasPrefix("folder:") && (note.folder == String(filter.dropFirst(7)) || note.folder.hasPrefix(String(filter.dropFirst(7)) + "/")))
+            return filterMatches && (search.isEmpty || (note.relativePath + "\n" + note.text).localizedStandardContains(search))
         }.sorted { a, b in
             if pinned.contains(a.id) != pinned.contains(b.id) { return pinned.contains(a.id) }
             return a.modified > b.modified
@@ -110,13 +112,23 @@ enum InspectorTab: String, CaseIterable { case outline = "Outline", inkwell = "I
         if restoreVault, !CommandLine.arguments.contains("--vault"), let last = UserDefaults.standard.string(forKey: "lastVault"), FileManager.default.fileExists(atPath: last) { openVault(URL(fileURLWithPath: last)) }
     }
     func chooseVault() {
-        let panel = NSOpenPanel(); panel.canChooseDirectories = true; panel.canChooseFiles = false; panel.prompt = "Open vault"
-        if panel.runModal() == .OK, let url = panel.url { openVault(url) }
+        showVaultBrowser = true
+    }
+    func browseFolder(_ folder: String) {
+        query = ""
+        filter = "folder:" + folder
+    }
+    @discardableResult func acceptVaultDrop(_ urls: [URL]) -> Bool {
+        guard urls.count == 1, let url = urls.first, url.isFileURL, !fileOperationInProgress else { return false }
+        openVault(url)
+        return true
     }
     func openVault(_ url: URL) { Task { await openVaultAndWait(url) } }
     func openVaultAndWait(_ url: URL) async {
         guard !fileOperationInProgress else { return }
-        guard let resolved = try? await BackgroundWork.run({ url.standardizedFileURL.resolvingSymlinksInPath() }) else { return }
+        let resolved: URL
+        do { resolved = try await BackgroundWork.run { try Vault.validatedRoot(url) } }
+        catch { self.error = error.localizedDescription; return }
         guard await save(), !fileOperationInProgress else { return }
         refreshTask?.cancel(); refreshTask = nil; refreshID = UUID()
         saveTask?.cancel(); previewTask?.cancel(); generation += 1

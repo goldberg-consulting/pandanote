@@ -8,7 +8,7 @@ final class WorkspaceFileActionsTests: XCTestCase {
         try FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         addTeardownBlock { try? FileManager.default.removeItem(at: root) }
         let defaults = UserDefaults.standard
-        let keys = ["autosave", "favorites", "pinned"]
+        let keys = ["autosave", "favorites", "pinned", "lastVault", "recentVaults"]
         let old = keys.map { defaults.object(forKey: $0) }
         defaults.set(false, forKey: "autosave")
         addTeardownBlock { for (key, value) in zip(keys, old) { defaults.set(value, forKey: key) } }
@@ -23,6 +23,49 @@ final class WorkspaceFileActionsTests: XCTestCase {
         return (workspace, vault, a, b)
     }
 
+    func testFolderBrowsingClearsSearchAndIncludesDescendantsWithoutPrefixSiblings() async throws {
+        try await browseFolders()
+    }
+    @MainActor private func browseFolders() async throws {
+        let (workspace, vault, a, _) = try await fixture()
+        let nested = try vault.create(name: "Nested", folder: "Research/Deep", text: "Body")
+        _ = try vault.create(name: "Sibling", folder: "Research Elsewhere", text: "Body")
+        workspace.notes = try vault.scan()
+        workspace.query = "no matches"
+        workspace.browseFolder("Research")
+        XCTAssertEqual(workspace.query, "")
+        XCTAssertEqual(Set(workspace.filteredNotes.map(\.url)), Set([a, nested]))
+        workspace.filter = "All notes"
+        workspace.query = "  research/deep  "
+        XCTAssertEqual(workspace.filteredNotes.map(\.url), [nested])
+    }
+    func testOpeningFolderSavesPreviousNoteAndRemembersVault() async throws { try await switchVault() }
+    @MainActor private func switchVault() async throws {
+        let (workspace, vault, a, _) = try await fixture()
+        let destination = try vault.createFolder(name: "Empty vault")
+        workspace.edit("Save before switching")
+        await workspace.openVaultAndWait(destination)
+        XCTAssertEqual(try vault.read(a), "Save before switching")
+        XCTAssertEqual(workspace.root?.path, destination.path)
+        XCTAssertNil(workspace.selected)
+        XCTAssertEqual(workspace.recentVaults.first, destination.path)
+        XCTAssertFalse(workspace.dirty)
+        XCTAssertEqual(workspace.filter, "All notes")
+    }
+    func testInvalidVaultDoesNotReplaceOpenDocument() async throws { try await invalidVault() }
+    @MainActor private func invalidVault() async throws {
+        let (workspace, vault, a, _) = try await fixture()
+        workspace.edit("Unsaved draft")
+        await workspace.openVaultAndWait(a)
+        XCTAssertEqual(workspace.root?.path, vault.root.path)
+        XCTAssertEqual(workspace.selected, a)
+        XCTAssertEqual(workspace.text, "Unsaved draft")
+        XCTAssertTrue(workspace.dirty)
+        XCTAssertNotNil(workspace.error)
+        XCTAssertFalse(workspace.acceptVaultDrop([]))
+        XCTAssertFalse(workspace.acceptVaultDrop([vault.root, vault.root]))
+        XCTAssertFalse(workspace.acceptVaultDrop([URL(string: "https://example.com")!]))
+    }
     func testRightClickedInactiveNoteIsRenamedWithoutChangingActiveDocument() async throws {
         try await inactiveRename()
     }
