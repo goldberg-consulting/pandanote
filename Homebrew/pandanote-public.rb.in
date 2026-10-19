@@ -8,10 +8,10 @@ cask "pandanote" do
   homepage "https://github.com/goldberg-consulting/pandanote"
 
   depends_on arch: :arm64
-  depends_on macos: :sequoia
   depends_on formula: "node"
   depends_on formula: "pandoc"
   depends_on formula: "pandoc-crossref"
+  depends_on macos: :sequoia
 
   app "Pandanote.app"
 
